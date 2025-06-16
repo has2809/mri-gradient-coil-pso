@@ -1,113 +1,115 @@
 # MRI Z-Gradient-Coil Design via Particle Swarm Optimisation (EE303 Project)
 
-This repository contains my MATLAB (R2023) implementation of **Particle Swarm Optimisation (PSO)** to place
-multiple coaxial loop pairs so that the axial magnetic-field component  
-\(B_z(z)\) inside a ±0.25 m region is as linear as possible.  
-The work was submitted as the *special assignment* for **EE303 · Numerical Analysis** (Fall 2023, University of Tripoli).
+This repository contains the MATLAB (R2023) implementation for the special assignment of the **EE303: Numerical Analysis** course (Fall 2023, University of Tripoli). The project uses **Particle Swarm Optimisation (PSO)** to design a longitudinal gradient coil for an MRI system. [cite_start]The goal is to strategically place multiple coaxial loop pairs to ensure the axial magnetic field component, $B_z(z)$, is as linear as possible within a ±0.25 m region of interest.
 
 <p align="center">
-  <img src="results/field_profile.png" width="560"
-       alt="Optimised vs. desired field profile">
+  <img src="./results/optimized_vs_desired_field.png" width="600" alt="Optimised vs. desired field profile">
 </p>
 
 ---
 
-## 1 · Physical background
+## 1 · Theoretical Background
 
-MRI scanners superimpose weak, linearly varying *gradient fields* on top of the strong
-static B-field. A classic way to generate the **longitudinal ( z-axis ) gradient**
-is the *Maxwell coil*: two identical circular loops separated by a distance \(a/\sqrt{3}\).
-Adding more **loop pairs at positions \(\pm Z_n\)** allows us to fine-tune linearity:  
+### Longitudinal Gradient Coils
 
-\[
-B_z(z)= \frac{\mu_0 I a^{2}}{2}\sum_{n=1}^{N_\text{pairs}}
-\left[(z-Z_n)^2+a^{2}\right]^{-3/2}\;-\;
-\left[(z+Z_n)^2+a^{2}\right]^{-3/2}
-\]
+[cite_start]In MRI, gradient fields are superimposed on the main static magnetic field to spatially encode the signal, which is essential for forming an image. [cite_start]The longitudinal (z-axis) gradient is often generated using a **Maxwell coil**, which consists of two identical circular loops. [cite_start]By adding more loop pairs at symmetric positions $\pm z_n$, the linearity of the magnetic field can be significantly improved.
 
-The assignment fixed the current \(I\) and loop radius \(a\) and asked us to
-choose the \(Z_n\) that minimise the squared error
+[cite_start]The total axial magnetic field $B_z$ for $N$ pairs of loops is given by:
 
-\[
-E=\int_{-L}^{L}
-\!\left[B_z(z; \mathbf Z)-kz\right]^{2}\,dz
-\tag{★}
-\]
+$$B_z(z)= \frac{\mu_0 I a^{2}}{2}\sum_{n=1}^{N} \left( \frac{1}{((z-z_{n})^{2}+a^{2})^{3/2}} - \frac{1}{((z+z_{n})^{2}+a^{2})^{3/2}} \right)$$
 
-where \(k=10^{-3}\,\text{T m}^{-1}\).  
-Full specifications are reproduced in *docs/Special_assignment.pdf* :contentReference[oaicite:0]{index=0}.
+[cite_start]The core of this project is to find the optimal positions $\mathbf{Z} = [z_1, z_2, ..., z_N]$ that minimize the integrated squared error between the generated field $B_z(z; \mathbf{Z})$ and a desired linear target field, $B_z^{desired}(z) = kz$. [cite_start]The error function $E$ is defined as:
 
-**Why PSO?**  
-\(E(\mathbf Z)\) is non-convex and derivative-free; PSO excels at such searches
-because particles exchange the best information they have found, explore in parallel, and
-require only function evaluations – no gradients :contentReference[oaicite:1]{index=1}.
+$$E=\int_{-L}^{L} \! \left[B_z(z; \mathbf{Z})-B_z^{desired}(z)\right]^{2}\,dz$$
+
+### Why Particle Swarm Optimisation?
+
+The error function $E(\mathbf{Z})$ is complex and non-convex. Traditional gradient-based optimization methods are not suitable because they can get stuck in local minima and require derivatives that are complex to compute. [cite_start]**Particle Swarm Optimisation (PSO)** is an ideal choice for this problem because:
+* [cite_start]It is a derivative-free algorithm, relying only on evaluating the fitness function.
+* [cite_start]It performs a parallel search of the solution space, making it robust against local minima.
+* [cite_start]Particles in the swarm share information to collaboratively guide the search toward the best solution.
 
 ---
 
-## 2 · Repository structure
+## 2 · Algorithm and Implementation
 
-| Path | Contents |
-|------|----------|
-| **src/** | Unmodified MATLAB source (`special.m`, `integral.m`, `Bz.m`, `test.m`) |
-| **docs/** | Assignment brief (PDF) |
-| **results/** | `field_profile.png` (generated plot) |
-| `.gitignore` | Ignores MATLAB autosaves, OS cruft |
-| `LICENSE` | MIT |
-| `README.md` | *you are here* |
-
----
-
-## 3 · Algorithm highlights
+The PSO algorithm was implemented in MATLAB to search for the optimal coil positions. The key parameters were chosen based on the assignment brief and common PSO practices.
 
 | Parameter | Value | Rationale |
-|-----------|-------|-----------|
-| Particles | 25 | ≥ 8 as requested by brief |
-| Iterations | 500 | Empirically convergent |
-| \(c_1,c_2\) | 2, 2 | Canonical PSO acceleration constants |
-| Inertia \(w\) | 0.9→0.4 (linear decay) | Balances exploration ↔ exploitation |
-| Velocity cap | ±0.5 m | Matches search-space width |
+| :--- | :--- | :--- |
+| **Swarm Size** | 25 particles | [cite_start]Meets the assignment requirement of using more than 8 agents. |
+| **Iterations** | 500 | An empirical value found to be sufficient for the algorithm to converge. |
+| **Cognitive Constant ($c_1$)** | 2 | A standard, canonical value for the PSO acceleration constant. |
+| **Social Constant ($c_2$)** | 2 | A standard, canonical value for the PSO acceleration constant. |
+| **Inertia Weight ($w$)**| 0.9 → 0.4 (linear decay) | Balances global exploration at the start with local exploitation later on. |
+| **Max Velocity ($V_{max}$)** | 0.5 m/iteration | Limits the step size to prevent particles from leaving the search space. |
+| **Search Space ($z_n$)**| [0, 0.5] m | [cite_start]A suitable boundary for the coil positions. |
 
-Fitness \(E\) is evaluated with **Simpson’s 3/8 rule** (`integral.m`, 300 segments) for
-accuracy without sacrificing speed.
+The fitness function $E$ was evaluated using **Simpson's 3/8 rule** for numerical integration, which provides a good balance between accuracy and computational speed. The integration was performed over 300 segments.
 
 ---
 
-## 4 · Reproducing the results
+## 3 · Repository Structure
 
-```matlab
-% MATLAB R2023
-cd src
-special                      % runs PSO, prints gbest & plots field
-saveas(gcf,'../results/field_profile.png');
-````
+| Path | Contents |
+| :--- | :--- |
+| **`src/`** | Contains all MATLAB source files (`special.m`, `Bz.m`, `integral.m`, `test.m`). |
+| **`docs/`** | Contains the original assignment brief (`Special_assignment.pdf`). |
+| **`results/`** | Contains the output plot (`optimized_vs_desired_field.png`). |
+| **`.gitignore`** | Standard Git ignore file for MATLAB projects. |
+| **`LICENSE`** | The MIT License for this project. |
+| **`README.md`** | You are here. |
 
-Expected output:
+---
 
+## 4 · How to Reproduce Results
+
+#### Prerequisites
+* MATLAB R2023 or a compatible version.
+
+#### Steps
+1.  Clone the repository to your local machine:
+    ```bash
+    git clone [https://github.com/YourUsername/MRI-Gradient-Coil-Design-PSO.git](https://github.com/YourUsername/MRI-Gradient-Coil-Design-PSO.git)
+    cd MRI-Gradient-Coil-Design-PSO
+    ```
+2.  Open MATLAB.
+3.  Navigate to the `src` directory and run the main script. To save the resulting plot, use the `saveas` command.
+    ```matlab
+    % In MATLAB Command Window
+    cd src
+    special  % Runs the PSO algorithm and generates the plot
+    saveas(gcf, '../results/optimized_vs_desired_field.png');
+    ```
+
+#### Expected Output
+The script will print the final optimized positions and the minimum error value to the command window. The format will be:
 ```
-gbest = [ 0.000, 0.112, 0.183, 0.249, … ]   % eight positions (m)
-gbest_value = 1.03e-08                      % integrated error (T²·m)
+gbest =
+    [0.000, 0.112, 0.183, 0.249, ...]  % A 1x8 vector of optimized positions (m)
+
+gbest_value =
+    1.03e-08                          % The final integrated squared error (T²·m)
 ```
 
-The saved PNG is the figure embedded at the top of this README.
+---
+
+## 5 · Code Description
+
+* **`special.m`**: The main driver script. [cite_start]It initializes the PSO parameters, manages the optimization loop, and plots the final results.
+* [cite_start]**`Bz.m`**: A function that calculates the magnetic field $B_z$ at a point `z` based on Equation (3) from the assignment brief.
+* [cite_start]**`integral.m`**: Implements Simpson's 3/8 rule for numerical integration, used to calculate the fitness/error value.
+* **`test.m`**: A supplementary script used for brute-force grid search during development for sanity-checking the problem space.
 
 ---
 
-## 5 · Key files
+## 6 · References
 
-* **special.m** – PSO driver implementing the loop of (position → velocity → evaluation → update).
-* **Bz.m** – Magnetic-field model for an N-pair Maxwell-like coil.
-* **integral.m** – Simpson 3/8 integrator used in Eq. (★).
-* **test.m** – Brute-force grid search (6 pairs) for sanity checks.
+* **Assignment Brief:** [docs/Special_assignment.pdf](docs/Special_assignment.pdf)
+* **PSO Background:** [Implementing Particle Swarm optimization from Scratch](https://python.plainenglish.io/implementing-particle-swarm-optimization-from-scratch-34608b475afd) by Muhammad Saad Uddin.
 
 ---
 
-## 6 · Further reading
+## 7 · License
 
-* Assignment specification (PDF) – *docs/Special\_assignment.pdf*&#x20;
-* Muhammad Saad Uddin, “Implementing PSO from Scratch,” *Python in Plain English*, 2022. (Link in code comments)&#x20;
-
----
-
-## 7 · Licence
-
-Released under the **MIT Licence**. See `LICENSE` for details.
+This project is released under the **MIT License**. See the `LICENSE` file for full details.
