@@ -1,6 +1,6 @@
 # MRI Z-Gradient-Coil Design via Particle Swarm Optimisation (EE303 Project)
 
-This repository contains the MATLAB (R2023) implementation for the special assignment of the **EE303: Numerical Analysis** course (Fall 2023, University of Tripoli). The project uses **Particle Swarm Optimisation (PSO)** to design a longitudinal gradient coil for an MRI system. [cite_start]The goal is to strategically place multiple coaxial loop pairs to ensure the axial magnetic field component, $B_z(z)$, is as linear as possible within a ±0.25 m region of interest.
+This repository contains the MATLAB (R2023) implementation for the special assignment of the **EE303: Numerical Analysis** course (Fall 2023, University of Tripoli). The project uses **Particle Swarm Optimisation (PSO)** to design a longitudinal gradient coil for an MRI system. The goal is to strategically place multiple coaxial loop pairs to ensure the axial magnetic field component, $B_z(z)$, is as linear as possible within a ±0.25 m region of interest.
 
 <p align="center">
   <img src="./results/optimized_vs_desired_field.png" width="600" alt="Optimised vs. desired field profile">
