@@ -106,7 +106,6 @@ gbest_value =
 ## 6 · References
 
 * **Assignment Brief:** [docs/Special_assignment.pdf](docs/Special_assignment.pdf)
-* **PSO Background:** [Implementing Particle Swarm optimization from Scratch](https://python.plainenglish.io/implementing-particle-swarm-optimization-from-scratch-34608b475afd) by Muhammad Saad Uddin.
 
 ---
 
